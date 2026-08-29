@@ -16,7 +16,9 @@ function walk(directory) {
 const allFiles = walk(root);
 const textFiles = allFiles.filter((file) => textExtensions.has(file.slice(file.lastIndexOf('.')).toLowerCase()));
 const contractFile = resolve(root, 'scripts/pool-site-contract.mjs');
+const layout = readFileSync(resolve(root, 'src/app/layout.tsx'), 'utf8');
 const source = textFiles.filter((file) => file !== contractFile).map((file) => readFileSync(file, 'utf8')).join('\n');
+assert.match(layout, /<html\s+lang="es"\s+suppressHydrationWarning>/, 'Root layout must ignore browser-injected html attributes during hydration');
 const requiredCopy = [
   'OCPOOL',
   'info@ocpool.com',
