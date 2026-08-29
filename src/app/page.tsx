@@ -123,9 +123,29 @@ export default function Home() {
           <div className="page-shell section-heading">
             <div>
               <p className="eyebrow"><span className="eyebrow__line" /> Servicios</p>
-              <h2>Resolvemos la alberca <em>completa.</em></h2>
+              <h2>Una solución completa para la <em>alberca.</em></h2>
             </div>
-            <p>Integramos las especialidades que intervienen en el resultado final, desde la definición del proyecto hasta su puesta en marcha.</p>
+            <p>Desde una obra nueva hasta una alberca existente: coordinamos diseño, estructura, agua, iluminación y acabados para que el resultado funcione y se mantenga claro.</p>
+          </div>
+          <div className="page-shell services-outcomes">
+            <div className="services-outcomes__intro">
+              <p className="section-kicker">Lo que queda resuelto</p>
+              <h3>La estética y la operación se deciden juntas.</h3>
+            </div>
+            <div className="services-outcomes__items">
+              <article>
+                <span>01</span>
+                <div><strong>Decisiones alineadas</strong><p>Geometría, materiales y uso parten del mismo criterio.</p></div>
+              </article>
+              <article>
+                <span>02</span>
+                <div><strong>Sistema especificado</strong><p>Circulación, filtración e iluminación se resuelven para operar y mantener.</p></div>
+              </article>
+              <article>
+                <span>03</span>
+                <div><strong>Entrega verificable</strong><p>La alberca se prueba y se entrega lista para integrarse a la rutina del espacio.</p></div>
+              </article>
+            </div>
           </div>
           <div className="page-shell services-list">
             {services.map((service) => (
@@ -144,15 +164,23 @@ export default function Home() {
           <div className="page-shell process-layout">
             <div className="process-intro">
               <p className="eyebrow"><span className="eyebrow__line" /> Cómo se desarrolla</p>
-              <h2>Un proceso con decisiones <em>claras.</em></h2>
-              <p>Antes de construir definimos alcance, sistema y prioridades. Durante la obra damos seguimiento a la ejecución y a la integración de cada especialidad.</p>
-            <figure className="process-proof"><div className="process-proof__media"><Image src="/proyectos/cdp/gallery/obra-18.jpg" alt="Avance de estructura en el Club de Playa CDP" fill sizes="(max-width: 720px) 100vw, 36vw" className="media-cover" /></div><figcaption>Avance de estructura · Club de Playa CDP</figcaption></figure>
+              <h2>Un proceso que evita <em>sorpresas.</em></h2>
+              <p>Antes de construir dejamos claro el alcance, el sistema y las decisiones que afectan costo, funcionamiento y mantenimiento.</p>
+              <div className="process-intro__note">
+                <span>Antes de empezar</span>
+                <strong>Qué se construye, cómo funcionará y quién coordina cada parte.</strong>
+              </div>
+              <figure className="process-proof"><div className="process-proof__media"><Image src="/proyectos/cdp/gallery/obra-18.jpg" alt="Avance de estructura en el Club de Playa CDP" fill sizes="(max-width: 720px) 100vw, 36vw" className="media-cover" /></div><figcaption>En sitio · estructura y preparación de instalaciones</figcaption></figure>
             </div>
             <div className="process-list">
               {processSteps.map((step) => (
                 <article className="process-step" key={step.number}>
                   <span className="process-step__number">{step.number}</span>
-                  <div><h3>{step.title}</h3><p>{step.description}</p></div>
+                  <div className="process-step__content">
+                    <div className="process-step__topline"><span>{step.focus}</span><span>Se define: {step.deliverable}</span></div>
+                    <h3>{step.title}</h3>
+                    <p>{step.description}</p>
+                  </div>
                 </article>
               ))}
             </div>
