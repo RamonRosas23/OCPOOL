@@ -139,6 +139,11 @@ export default function QuoteForm() {
           <p className="section-kicker section-kicker--dark">Contacto directo</p>
           <h3>También puedes escribirnos directamente.</h3>
           <p>Si ya tienes planos, medidas o fotografías, puedes enviarlos por estos canales.</p>
+          <ul className="quote-aside__list">
+            <li>Ubicación y tipo de obra</li>
+            <li>Medidas, planos o fotografías</li>
+            <li>Alcance deseado: nueva, remodelación o equipamiento</li>
+          </ul>
           <div className="direct-links">
             <a href={`mailto:${contactDetails.email}`}>{contactDetails.email} <span aria-hidden="true">↗</span></a>
             <a href={contactDetails.phoneHref}>{contactDetails.phone} <span aria-hidden="true">↗</span></a>

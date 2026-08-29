@@ -55,7 +55,7 @@ function ProjectCard({ project, index, featured, onOpen }: { project: Project; i
           <h3>{project.title}</h3>
           <p className="project-card__summary">{project.summary}</p>
           <div className="project-card__phase-line">
-            <span>Etapas disponibles</span>
+            <span>Registro incluido</span>
             <ol>
               {project.phases.map((phase, phaseIndex) => (
                 <li key={phase.label}><b>{String(phaseIndex + 1).padStart(2, '0')}</b>{phase.label}</li>
@@ -126,7 +126,7 @@ export default function ProjectShowcase() {
 
   return (
     <div className="project-showcase">
-      <div className="project-index-bar"><span>Proyectos disponibles</span><span aria-live="polite">{String(visibleProjects.length).padStart(2, '0')} resultados</span></div>
+      <div className="project-index-bar"><span>Selecciona una ficha para revisar imágenes, alcance y referencias</span><span aria-live="polite">{String(visibleProjects.length).padStart(2, '0')} fichas</span></div>
       <div className="project-filters" role="group" aria-label="Filtrar proyectos">
         {filters.map((filter) => (
           <button key={filter} type="button" className={`filter-button ${activeFilter === filter ? 'filter-button--active' : ''}`} aria-pressed={activeFilter === filter} onClick={() => setActiveFilter(filter)}>

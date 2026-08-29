@@ -77,7 +77,7 @@ export default function Home() {
               <p className="eyebrow"><span className="eyebrow__line" /> Evidencia de ejecución</p>
               <h2 id="proof-title">La ejecución, en <em>imágenes.</em></h2>
             </div>
-            <p>Fotografías de obra terminada, avances, acabados y sistemas. Una referencia concreta del nivel de ejecución de OCPOOL.</p>
+            <p>Revisa el resultado, la obra y los detalles que sostienen cada proyecto. Una referencia concreta del nivel de ejecución de OCPOOL.</p>
           </div>
           <div className="page-shell proof-grid">
             {visualProof.map((item, index) => (
@@ -95,7 +95,7 @@ export default function Home() {
               <p className="eyebrow eyebrow--light"><span className="eyebrow__line" /> Portafolio</p>
               <h2>Proyectos residenciales y de <em>hospitalidad.</em></h2>
             </div>
-            <p>Consulta obras entregadas y propuestas en desarrollo. Cada ficha indica el alcance, la ubicación y el material disponible.</p>
+            <p>Compara el resultado final, el nivel de avance y el tipo de intervención antes de pedir una cotización.</p>
           </div>
           <div className="page-shell"><ProjectShowcase /></div>
         </section>
@@ -115,6 +115,16 @@ export default function Home() {
                 <figcaption><span>{item.label}</span><strong>{item.caption}</strong></figcaption>
               </figure>
             ))}
+          </div>
+          <div className="page-shell construction-note">
+            <div>
+              <p className="section-kicker">Qué permite revisar este caso</p>
+              <h3>La propuesta, la estructura y el acabado final se leen como un solo alcance.</h3>
+            </div>
+            <div>
+              <p>En un proyecto de hospitalidad, la alberca debe responder a la experiencia del lugar y a su operación diaria. Por eso el seguimiento continúa hasta verificar sistema, acabados y entrega.</p>
+              <a className="text-link" href="#proyectos">Revisar proyectos <Arrow /></a>
+            </div>
           </div>
           <div className="page-shell construction-hint" aria-hidden="true">Desliza para revisar propuesta, obra y entrega <span aria-hidden="true">→</span></div>
         </section>
@@ -197,7 +207,11 @@ export default function Home() {
               <p className="eyebrow"><span className="eyebrow__line" /> OCPOOL</p>
               <h2>Un equipo técnico para proyectos <em>exigentes.</em></h2>
               <p>OCPOOL desarrolla y construye albercas para espacios residenciales y de hospitalidad. Combinamos diseño, ingeniería y ejecución para que las decisiones estéticas no queden separadas de la operación.</p>
-              <div className="about-note"><strong>1</strong><span>interlocutor para<br />diseño · obra · sistemas</span></div>
+              <div className="about-note">
+                <span className="about-note__eyebrow">Coordinación integral</span>
+                <strong>Diseño · obra · sistemas</strong>
+                <span className="about-note__copy">Un mismo alcance para que cada decisión llegue completa a la obra.</span>
+              </div>
               <a className="text-link" href="#contacto">Solicitar una valoración <Arrow /></a>
             </div>
           </div>
