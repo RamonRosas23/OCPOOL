@@ -13,7 +13,7 @@ function isNonEmpty(value: unknown): value is string {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json() as Record<string, unknown>;
-    const { nombre, telefono, email, tipoProyecto, ubicacion, mensaje } = body;
+    const { nombre, telefono, email, tipoProyecto, ubicacion, mensaje, acceptTerms } = body;
 
     if (
       !isNonEmpty(nombre) ||
@@ -21,7 +21,8 @@ export async function POST(request: NextRequest) {
       !isValidEmail(email) ||
       !isNonEmpty(tipoProyecto) ||
       !isNonEmpty(ubicacion) ||
-      !isNonEmpty(mensaje)
+      !isNonEmpty(mensaje) ||
+      acceptTerms !== true
     ) {
       return NextResponse.json({ error: 'Completa todos los campos requeridos.' }, { status: 400 });
     }

@@ -1,0 +1,390 @@
+import AxeBuilder from '@axe-core/playwright';
+import { test, expect } from '@playwright/test';
+
+const validPayload = {
+  nombre: 'Prueba OCPOOL',
+  telefono: '667 000 0000',
+  email: 'qa@example.com',
+  tipoProyecto: 'Alberca residencial',
+  ubicacion: 'Culiacán, Sinaloa',
+  mensaje: 'Solicitud de prueba automatizada.',
+};
+
+async function expectNoSeriousA11yViolations(page: Parameters<typeof AxeBuilder>[0]['page']) {
+  const results = await new AxeBuilder({ page }).analyze();
+  const seriousViolations = results.violations.filter((violation) => violation.impact === 'critical' || violation.impact === 'serious');
+  expect(seriousViolations, JSON.stringify(seriousViolations, null, 2)).toEqual([]);
+}
+
+test.describe('OCPOOL quality contract', () => {
+  test('keeps anchored section headings clear of the fixed header', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('link', { name: 'Cotizar', exact: true }).first().click();
+
+    const metrics = await page.evaluate(() => {
+      const header = document.querySelector('.site-header');
+      const target = document.querySelector('#contacto');
+      if (!header || !target) throw new Error('Header or contact section not found');
+      return {
+        headerBottom: header.getBoundingClientRect().bottom,
+        targetTop: target.getBoundingClientRect().top,
+      };
+    });
+
+    expect(metrics.targetTop).toBeGreaterThanOrEqual(metrics.headerBottom - 4);
+  });
+
+  test('prioritizes the hero image as the largest contentful paint candidate', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+
+    const heroImage = page.locator('img.hero__image');
+    await expect(heroImage).toHaveAttribute('fetchpriority', 'high');
+    await expect(heroImage).not.toHaveAttribute('loading', 'lazy');
+  });
+
+  test('provides a keyboard skip link to the main content', async ({ page }) => {
+    await page.goto('/');
+
+    const skipLink = page.getByRole('link', { name: 'Saltar al contenido' });
+    await expect(skipLink).toHaveAttribute('href', '#contenido');
+
+    await page.keyboard.press('Tab');
+    await expect(skipLink).toBeFocused();
+    await expect(skipLink).toBeVisible();
+
+    await page.keyboard.press('Enter');
+    await expect(page).toHaveURL(/#contenido$/);
+  });
+
+  test('closes the mobile menu with Escape and an outside click', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+
+    const toggle = page.locator('.menu-toggle');
+    const navigation = page.locator('#primary-navigation');
+
+    await toggle.click();
+    await expect(navigation).toBeVisible();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+
+    await page.keyboard.press('Escape');
+    await expect(navigation).toBeHidden();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(toggle).toBeFocused();
+
+    await toggle.click();
+    await expect(navigation).toBeVisible();
+    await page.mouse.click(12, 420);
+    await expect(navigation).toBeHidden();
+  });
+
+  test('keeps project dialog focus contained and restores it to its trigger', async ({ page }) => {
+    await page.goto('/');
+
+    const trigger = page.getByRole('button', { name: 'Ver ficha del proyecto' }).first();
+    await trigger.click();
+
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Cerrar proyecto' })).toBeFocused();
+
+    for (let index = 0; index < 5; index += 1) {
+      await page.keyboard.press('Tab');
+      await expect(page.locator(':focus').evaluate((element) => Boolean(element.closest('[role="dialog"]')))).resolves.toBe(true);
+    }
+
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+    await expect(trigger).toBeFocused();
+  });
+
+  test('rejects a request without explicit server-side consent', async ({ request }) => {
+    const response = await request.post('/api/send-email', { data: { ...validPayload, acceptTerms: false } });
+    expect(response.status()).toBe(400);
+  });
+
+  test('prepares an accepted request without sending real data externally', async ({ request }) => {
+    const response = await request.post('/api/send-email', { data: { ...validPayload, acceptTerms: true } });
+    expect(response.status()).toBe(200);
+    const body = await response.json() as { success?: boolean; mailtoUrl?: string };
+    expect(body.success).toBe(true);
+    expect(body.mailtoUrl).toContain('mailto:info@ocpool.com');
+  });
+
+  test('exposes complete SEO metadata and generated discovery routes', async ({ page, request }) => {
+    await page.goto('/');
+
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /^https:\/\/www\.ocpool\.com\/?$/);
+    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', /OCPOOL/);
+    await expect(page.locator('meta[property="og:description"]')).toHaveAttribute('content', /albercas/i);
+    await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
+    await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(1);
+
+    const robots = await request.get('/robots.txt');
+    expect(robots.status()).toBe(200);
+    expect(await robots.text()).toContain('Sitemap: https://www.ocpool.com/sitemap.xml');
+
+    const sitemap = await request.get('/sitemap.xml');
+    expect(sitemap.status()).toBe(200);
+    expect(await sitemap.text()).toContain('https://www.ocpool.com/');
+  });
+
+  test('has no horizontal overflow at supported viewport widths', async ({ page }) => {
+    for (const width of [360, 390, 768, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto('/');
+      const metrics = await page.evaluate(() => ({
+        viewport: document.documentElement.clientWidth,
+        content: document.documentElement.scrollWidth,
+      }));
+      expect(metrics.content, `horizontal overflow at ${width}px`).toBeLessThanOrEqual(metrics.viewport + 1);
+    }
+  });
+
+  test('keeps construction guidance available to assistive technology', async ({ page }) => {
+    await page.goto('/');
+    const hint = page.locator('.construction-hint');
+    await expect(hint).toContainText('Desliza para revisar propuesta, obra y entrega');
+    await expect(hint).not.toHaveAttribute('aria-hidden', 'true');
+  });
+
+  test('adds a distinctive line icon to each project type card', async ({ page }) => {
+    await page.goto('/#manifiesto');
+
+    const icons = page.locator('.manifesto__profile-icon');
+    await expect(icons).toHaveCount(3);
+    await expect(icons.evaluateAll((elements) => elements.map((element) => element.getAttribute('data-profile-icon')))).resolves.toEqual(['residencial', 'hospitalidad', 'existente']);
+
+    const layout = await page.locator('.manifesto__profile article').first().evaluate((element) => {
+      const icon = element.querySelector('.manifesto__profile-icon');
+      const side = element.querySelector('.manifesto__profile-side');
+      const copy = element.querySelector(':scope > .manifesto__profile-copy');
+      if (!icon || !side || !copy) throw new Error('Project type card layout is incomplete');
+      return {
+        sideColumnStart: getComputedStyle(side).gridColumnStart,
+        sideColumnEnd: getComputedStyle(side).gridColumnEnd,
+        copyColumnStart: getComputedStyle(copy).gridColumnStart,
+        copyColumnEnd: getComputedStyle(copy).gridColumnEnd,
+        copyRowStart: getComputedStyle(copy).gridRowStart,
+        copyRowEnd: getComputedStyle(copy).gridRowEnd,
+      };
+    });
+
+    expect(layout.sideColumnStart).toBe('1');
+    expect(layout.sideColumnEnd).toBe('2');
+    expect(layout.copyColumnStart).toBe('2');
+    expect(layout.copyColumnEnd).toBe('3');
+    expect(layout.copyRowStart).toBe('1');
+    expect(layout.copyRowEnd).toBe('2');
+
+    for (const icon of await icons.all()) {
+      await expect(icon).toHaveAttribute('aria-hidden', 'true');
+      await expect(icon).toHaveAttribute('fill', 'none');
+      await expect(icon).toHaveAttribute('stroke', 'currentColor');
+    }
+  });
+
+  test('keeps project type cards compact without trailing whitespace', async ({ page }) => {
+    for (const width of [390, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto('/#manifiesto');
+
+      const cardMetrics = await page.locator('.manifesto__profile article').first().evaluate((element) => {
+        const cardBox = element.getBoundingClientRect();
+        const contentBottom = Math.max(
+          element.querySelector('.manifesto__profile-side')?.getBoundingClientRect().bottom ?? cardBox.top,
+          element.querySelector('.manifesto__profile-copy')?.getBoundingClientRect().bottom ?? cardBox.top,
+        );
+        return { height: cardBox.height, trailingSpace: cardBox.bottom - contentBottom };
+      });
+
+      expect(cardMetrics.height, `card height at ${width}px`).toBeLessThanOrEqual(160);
+      expect(cardMetrics.trailingSpace, `trailing card space at ${width}px`).toBeLessThanOrEqual(32);
+    }
+  });
+
+  test('reveals editorial sections as they enter the viewport', async ({ page }) => {
+    await page.goto('/');
+
+    await expect(page.locator('.hero__copy')).toHaveClass(/reveal-visible/);
+    const services = page.locator('.services-list');
+    await services.scrollIntoViewIfNeeded();
+    await expect(services).toHaveClass(/reveal-visible/);
+  });
+
+  test('presents service dossiers with a clear quote action on desktop', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/#servicios');
+
+    const rows = page.locator('.service-row');
+    await expect(rows).toHaveCount(5);
+    await expect(rows.first().locator('.service-row__cta-label')).toHaveText('Cotizar servicio');
+
+    const metrics = await rows.first().evaluate((element) => {
+      const media = element.querySelector('.service-row__media');
+      const cta = element.querySelector(':scope > a');
+      if (!media || !cta) throw new Error('Service dossier structure is incomplete');
+      return {
+        mediaWidth: media.getBoundingClientRect().width,
+        mediaHeight: media.getBoundingClientRect().height,
+        ctaHeight: cta.getBoundingClientRect().height,
+      };
+    });
+
+    expect(metrics.mediaWidth).toBeGreaterThanOrEqual(160);
+    expect(metrics.mediaHeight).toBeGreaterThanOrEqual(96);
+    expect(metrics.ctaHeight).toBeGreaterThanOrEqual(44);
+  });
+
+  test('turns service dossiers into spacious touch-friendly cards on mobile', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/#servicios');
+
+    const rows = page.locator('.service-row');
+    await rows.first().scrollIntoViewIfNeeded();
+    await expect(rows.first().locator('.service-row__cta-label')).toHaveText('Cotizar servicio');
+
+    const metrics = await rows.first().evaluate((element) => {
+      const media = element.querySelector('.service-row__media');
+      const cta = element.querySelector(':scope > a');
+      if (!media || !cta) throw new Error('Mobile service dossier structure is incomplete');
+      return {
+        mediaWidth: media.getBoundingClientRect().width,
+        mediaHeight: media.getBoundingClientRect().height,
+        ctaWidth: cta.getBoundingClientRect().width,
+        ctaHeight: cta.getBoundingClientRect().height,
+        contentWidth: document.documentElement.scrollWidth,
+        viewportWidth: document.documentElement.clientWidth,
+      };
+    });
+
+    expect(metrics.mediaWidth).toBeGreaterThanOrEqual(300);
+    expect(metrics.mediaHeight).toBeGreaterThanOrEqual(150);
+    expect(metrics.ctaWidth).toBeGreaterThanOrEqual(300);
+    expect(metrics.ctaHeight).toBeGreaterThanOrEqual(44);
+    expect(metrics.contentWidth).toBeLessThanOrEqual(metrics.viewportWidth + 1);
+  });
+
+  test('respects reduced motion while keeping content visible', async ({ browser }) => {
+    const context = await browser.newContext({ reducedMotion: 'reduce' });
+    const page = await context.newPage();
+
+    await page.goto('/');
+
+    await expect(page.locator('.hero__copy')).toHaveClass(/reveal-visible/);
+    const motionState = await page.locator('.hero__copy').evaluate((element) => {
+      const styles = getComputedStyle(element);
+      return { opacity: styles.opacity, transform: styles.transform, transitionDelay: styles.transitionDelay };
+    });
+    expect(motionState.opacity).toBe('1');
+    expect(motionState.transform).toBe('none');
+    expect(Number.parseFloat(motionState.transitionDelay)).toBe(0);
+
+    await context.close();
+  });
+
+  test('moves the active project filter indicator with the selected category', async ({ page }) => {
+    await page.goto('/#proyectos');
+    const delivered = page.getByRole('button', { name: 'Entregados', exact: true });
+
+    await delivered.click();
+
+    await expect(delivered).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('.filter-button__active')).toHaveCount(1);
+    await expect(page.locator('.project-index-bar')).toContainText('03 fichas');
+  });
+
+  test('keeps secondary project cards readable on mobile', async ({ page }) => {
+    for (const width of [360, 390]) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto('/#proyectos');
+
+      const card = page.locator('.project-card:not(.project-card--featured)').first();
+      await card.scrollIntoViewIfNeeded();
+      const cardStyles = await card.evaluate((element) => {
+        const copy = element.querySelector('.project-card__copy');
+        const button = element.querySelector('.text-link');
+        if (!copy || !button) throw new Error('Secondary project card structure is incomplete');
+        return {
+          copyPosition: getComputedStyle(copy).position,
+          copyBackground: getComputedStyle(copy).backgroundColor,
+          copyOverflow: getComputedStyle(copy).overflow,
+          buttonColor: getComputedStyle(button).color,
+          buttonText: button.textContent?.trim(),
+        };
+      });
+
+      expect(cardStyles.copyPosition, `copy position at ${width}px`).toBe('static');
+      expect(cardStyles.copyBackground, `copy background at ${width}px`).toBe('rgb(244, 241, 234)');
+      expect(cardStyles.copyOverflow, `copy overflow at ${width}px`).toBe('visible');
+      expect(cardStyles.buttonColor, `button color at ${width}px`).toBe('rgb(11, 39, 54)');
+      expect(cardStyles.buttonText).toContain('Ver ficha del proyecto');
+    }
+  });
+
+  test('presents a clear branded footer on mobile', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+
+    const footer = page.locator('.site-footer');
+    await footer.scrollIntoViewIfNeeded();
+    await expect(footer.locator('.footer-intro h2')).toContainText('proyecto');
+    await expect(footer.getByRole('link', { name: /Iniciar conversación/i })).toBeVisible();
+    await expect(footer.locator('.footer-main')).toHaveCSS('display', 'grid');
+    await expect(footer.locator('.footer-bottom')).toContainText('OCPOOL');
+  });
+
+  test('gives secondary project CTAs a 44px mobile hit area', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/#proyectos');
+
+    const ctas = page.locator('.project-card:not(.project-card--featured) .text-link--card');
+    await expect(ctas.first()).toHaveCSS('min-height', '44px');
+  });
+
+  test('keeps secondary project CTAs on one line at tablet width', async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 900 });
+    await page.goto('/#proyectos');
+
+    const cta = page.locator('.project-card:not(.project-card--featured) .text-link--card').first();
+    await expect(cta).toHaveCSS('white-space', 'nowrap');
+  });
+
+  test('assigns a distinct visual motif to each content section', async ({ page }) => {
+    await page.goto('/');
+
+    const motifs = await page.locator('[data-section-motif]').evaluateAll((elements) => elements.map((element) => element.getAttribute('data-section-motif')));
+    expect(motifs).toEqual(['field-notes', 'bathymetry', 'orbit', 'datum', 'hydraulic-plan', 'route', 'ripples', 'coordinates', 'horizon']);
+    expect(new Set(motifs).size).toBe(motifs.length);
+  });
+
+  test('has no serious accessibility violations on page, menu, or dialog', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('.hero__copy')).toHaveClass(/reveal-visible/);
+    await expectNoSeriousA11yViolations(page);
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.getByRole('button', { name: 'Abrir menú' }).click();
+    await expectNoSeriousA11yViolations(page);
+    await page.keyboard.press('Escape');
+
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.getByRole('button', { name: 'Ver ficha del proyecto' }).first().click();
+    await expectNoSeriousA11yViolations(page);
+  });
+
+  test('does not emit browser console errors through the core flows', async ({ page }) => {
+    const errors: string[] = [];
+    page.on('console', (message) => {
+      if (message.type() === 'error') errors.push(message.text());
+    });
+
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Ver ficha del proyecto' }).first().click();
+    await page.keyboard.press('Escape');
+    await page.getByRole('link', { name: 'Cotizar', exact: true }).first().click();
+
+    expect(errors).toEqual([]);
+  });
+});

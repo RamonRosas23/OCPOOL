@@ -1,7 +1,9 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { AnimatePresence, MotionConfig, motion } from 'motion/react';
+import { createPortal } from 'react-dom';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { projects, type Project } from '@/lib/pool-content';
 
 type ProjectFilter = 'Todos' | 'Entregados' | 'Con etapas' | 'En desarrollo';
@@ -23,27 +25,12 @@ function getCardLayout(index: number) {
 }
 
 function ProjectCard({ project, index, featured, onOpen }: { project: Project; index: number; featured: boolean; onOpen: (project: Project, button: HTMLButtonElement) => void }) {
-  const [isVisible, setIsVisible] = useState(false);
   const cardRef = useRef<HTMLElement | null>(null);
-
-  useEffect(() => {
-    const element = cardRef.current;
-    if (!element) return;
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        setIsVisible(true);
-        observer.disconnect();
-      }
-    }, { threshold: 0.08, rootMargin: '0px 0px -50px' });
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, []);
-
-  const revealStyle = { '--reveal-delay': `${Math.min(index * 70, 360)}ms` } as CSSProperties;
+  const animationDelay = Math.min(index * 70, 360) / 1000;
 
   if (featured) {
     return (
-      <article ref={cardRef} style={revealStyle} className={`project-card project-card--featured reveal-item ${isVisible ? 'reveal-item--visible' : ''}`}>
+      <motion.article ref={cardRef} layout initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -18 }} transition={{ duration: 0.62, delay: animationDelay, ease: [0.2, 0.65, 0.3, 1] }} className="project-card project-card--featured">
         <div className="project-card__feature-media">
           <Image src={project.image} alt={project.imageAlt} fill sizes="(max-width: 800px) 100vw, 66vw" className="media-cover" />
           <div className="project-card__feature-stamp"><span>01</span><span>Caso documentado</span></div>
@@ -66,58 +53,105 @@ function ProjectCard({ project, index, featured, onOpen }: { project: Project; i
             Ver ficha del proyecto <span className="arrow" aria-hidden="true">↗</span>
           </button>
         </div>
-      </article>
+      </motion.article>
     );
   }
 
   return (
-    <article ref={cardRef} style={revealStyle} className={`project-card ${getCardLayout(index)} reveal-item ${isVisible ? 'reveal-item--visible' : ''}`}>
+    <motion.article ref={cardRef} layout initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -18 }} transition={{ duration: 0.62, delay: animationDelay, ease: [0.2, 0.65, 0.3, 1] }} className={`project-card ${getCardLayout(index)}`}>
       <div className="project-card__media">
         <Image src={project.image} alt={project.imageAlt} fill sizes="(max-width: 800px) 100vw, 33vw" className="media-cover" />
         <div className="project-card__shade" />
         <div className="project-card__topline"><span>{project.category}</span><span>{project.status}</span></div>
-        <div className="project-card__copy">
-          <p className="project-card__location">{project.location} {project.year !== '—' ? `· ${project.year}` : ''}</p>
-          <h3>{project.title}</h3>
-          <p className="project-card__summary">{project.summary}</p>
-          <button className="text-link text-link--light" type="button" onClick={(event) => onOpen(project, event.currentTarget)}>
-            Ver ficha del proyecto <span className="arrow" aria-hidden="true">↗</span>
-          </button>
-        </div>
       </div>
-    </article>
+      <div className="project-card__copy">
+        <p className="project-card__location">{project.location} {project.year !== '—' ? `· ${project.year}` : ''}</p>
+        <h3>{project.title}</h3>
+        <p className="project-card__summary">{project.summary}</p>
+        <button className="text-link text-link--card" type="button" onClick={(event) => onOpen(project, event.currentTarget)}>
+          Ver ficha del proyecto <span className="arrow" aria-hidden="true">↗</span>
+        </button>
+      </div>
+    </motion.article>
   );
 }
 
 export default function ProjectShowcase() {
   const [activeFilter, setActiveFilter] = useState<ProjectFilter>('Todos');
   const [activeProject, setActiveProject] = useState<Project | null>(null);
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const dialogRef = useRef<HTMLElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const visibleProjects = projects.filter((project) => matchesFilter(project, activeFilter));
 
-  const closeProject = () => {
+  useEffect(() => {
+    setPortalTarget(document.body);
+  }, []);
+
+  const closeProject = useCallback((restoreFocus = true) => {
     setActiveProject(null);
-    window.setTimeout(() => triggerRef.current?.focus(), 0);
-  };
+    if (restoreFocus) window.setTimeout(() => triggerRef.current?.focus(), 0);
+  }, []);
 
   useEffect(() => {
     if (!activeProject) return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+    const focusableSelector = 'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    const backgroundNodes = Array.from(document.body.children)
+      .filter((element) => element !== dialog.closest('.project-dialog-layer'))
+      .filter((element): element is HTMLElement => element instanceof HTMLElement);
+    const previousInert = new Map<HTMLElement, string | null>();
+    backgroundNodes.forEach((element) => {
+      previousInert.set(element, element.getAttribute('inert'));
+      element.setAttribute('inert', '');
+    });
+
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') closeProject();
+      if (event.key === 'Escape') {
+        closeProject();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+
+      const focusableElements = Array.from(dialog.querySelectorAll<HTMLElement>(focusableSelector));
+      if (focusableElements.length === 0) {
+        event.preventDefault();
+        dialog.focus();
+        return;
+      }
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+      if (!dialog.contains(document.activeElement)) {
+        event.preventDefault();
+        firstElement.focus();
+      } else if (event.shiftKey && document.activeElement === firstElement) {
+        event.preventDefault();
+        lastElement.focus();
+      } else if (!event.shiftKey && document.activeElement === lastElement) {
+        event.preventDefault();
+        firstElement.focus();
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    window.requestAnimationFrame(() => closeButtonRef.current?.focus());
+    const focusFrame = window.requestAnimationFrame(() => closeButtonRef.current?.focus());
 
     return () => {
+      window.cancelAnimationFrame(focusFrame);
       document.body.style.overflow = previousOverflow;
+      previousInert.forEach((value, element) => {
+        if (value === null) element.removeAttribute('inert');
+        else element.setAttribute('inert', value);
+      });
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [activeProject]);
+  }, [activeProject, closeProject]);
 
   const openProject = (project: Project, button: HTMLButtonElement) => {
     triggerRef.current = button;
@@ -125,54 +159,85 @@ export default function ProjectShowcase() {
   };
 
   return (
-    <div className="project-showcase">
+    <MotionConfig reducedMotion="user">
+      <div className="project-showcase">
       <div className="project-index-bar"><span>Selecciona una ficha para revisar imágenes, alcance y referencias</span><span aria-live="polite">{String(visibleProjects.length).padStart(2, '0')} fichas</span></div>
       <div className="project-filters" role="group" aria-label="Filtrar proyectos">
         {filters.map((filter) => (
           <button key={filter} type="button" className={`filter-button ${activeFilter === filter ? 'filter-button--active' : ''}`} aria-pressed={activeFilter === filter} onClick={() => setActiveFilter(filter)}>
-            {filter}
+            {activeFilter === filter && <motion.span className="filter-button__active" layoutId="active-project-filter" aria-hidden="true" />}
+            <span className="filter-button__label">{filter}</span>
           </button>
         ))}
       </div>
 
-      <div className="project-grid" key={activeFilter}>
-        {visibleProjects.map((project, index) => (
-          <ProjectCard key={project.id} project={project} index={index} featured={activeFilter === 'Todos' && index === 0} onOpen={openProject} />
-        ))}
+      <div className="project-grid">
+        <AnimatePresence mode="popLayout" initial={false}>
+          {visibleProjects.map((project, index) => (
+            <ProjectCard key={project.id} project={project} index={index} featured={activeFilter === 'Todos' && index === 0} onOpen={openProject} />
+          ))}
+        </AnimatePresence>
       </div>
 
       {visibleProjects.length === 0 && <p className="project-empty">No hay casos publicados en esta categoría.</p>}
 
-      {activeProject && (
-        <div className="project-dialog-layer" role="presentation" onMouseDown={(event) => {
-          if (event.target === event.currentTarget) closeProject();
-        }}>
-          <section className="project-dialog" role="dialog" aria-modal="true" aria-labelledby={`project-dialog-title-${activeProject.id}`} onMouseDown={(event) => event.stopPropagation()}>
-            <div className="project-dialog__header">
-              <div>
-                <p className="section-kicker section-kicker--dark">{activeProject.category} / {activeProject.status}</p>
-                <h2 id={`project-dialog-title-${activeProject.id}`}>{activeProject.title}</h2>
-                <p>{activeProject.location} {activeProject.year !== '—' ? `· ${activeProject.year}` : ''}</p>
-              </div>
-              <button ref={closeButtonRef} className="dialog-close" type="button" onClick={closeProject} aria-label="Cerrar proyecto"><span aria-hidden="true">×</span></button>
-            </div>
-            <div className="project-dialog__body">
-              <div className="project-dialog__intro"><p>{activeProject.summary}</p><div className="capability-list" aria-label="Capacidades del proyecto">{activeProject.capabilities.map((capability) => <span key={capability}>{capability}</span>)}</div></div>
-              <div className="phase-list">{activeProject.phases.map((phase) => <figure className="project-dialog__phase" key={phase.label}><div className="project-dialog__phase-media"><Image src={phase.image} alt={phase.alt} fill sizes="(max-width: 800px) 100vw, 45vw" className="media-cover" /></div><figcaption><span>{phase.label}</span><span aria-hidden="true">↗</span></figcaption></figure>)}</div>
-              <div className="gallery-heading"><p className="section-kicker section-kicker--dark">Registro del proyecto</p><span>{activeProject.gallery.length} vistas disponibles</span></div>
-              <div className="project-gallery" aria-label={`Registro visual de ${activeProject.title}`}>
-                {activeProject.gallery.map((media) => (
-                  <figure className={`project-gallery__item project-gallery__item--${media.kind}`} key={media.src}>
-                    <div className="project-gallery__media"><Image src={media.src} alt={media.alt} fill sizes="(max-width: 800px) 100vw, 33vw" className="media-cover" /></div>
-                    <figcaption><span>{media.label}</span><span aria-hidden="true">↗</span></figcaption>
-                  </figure>
-                ))}
-              </div>
-              <a className="button button--dark" href="#contacto" onClick={closeProject}>Solicitar un proyecto similar <span aria-hidden="true">↗</span></a>
-            </div>
-          </section>
-        </div>
+      {portalTarget && createPortal(
+          <AnimatePresence>
+            {activeProject && (
+              <motion.div
+                key={activeProject.id}
+                className="project-dialog-layer"
+                role="presentation"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.18, ease: 'easeOut' }}
+                onMouseDown={(event) => {
+                  if (event.target === event.currentTarget) closeProject();
+                }}
+              >
+                <motion.section
+                  ref={dialogRef}
+                  className="project-dialog"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby={`project-dialog-title-${activeProject.id}`}
+                  tabIndex={-1}
+                  initial={{ opacity: 0, y: 18 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 12 }}
+                  transition={{ duration: 0.26, ease: [0.2, 0.65, 0.3, 1] }}
+                  onMouseDown={(event) => event.stopPropagation()}
+                >
+                  <div className="project-dialog__header">
+                    <div>
+                      <p className="section-kicker section-kicker--dark">{activeProject.category} / {activeProject.status}</p>
+                      <h2 id={`project-dialog-title-${activeProject.id}`}>{activeProject.title}</h2>
+                      <p>{activeProject.location} {activeProject.year !== '—' ? `· ${activeProject.year}` : ''}</p>
+                    </div>
+                    <button ref={closeButtonRef} className="dialog-close" type="button" onClick={() => closeProject()} aria-label="Cerrar proyecto"><span aria-hidden="true">×</span></button>
+                  </div>
+                  <div className="project-dialog__body">
+                    <div className="project-dialog__intro"><p>{activeProject.summary}</p><div className="capability-list" aria-label="Capacidades del proyecto">{activeProject.capabilities.map((capability) => <span key={capability}>{capability}</span>)}</div></div>
+                    <div className="phase-list">{activeProject.phases.map((phase) => <figure className="project-dialog__phase" key={phase.label}><div className="project-dialog__phase-media"><Image src={phase.image} alt={phase.alt} fill sizes="(max-width: 800px) 100vw, 45vw" className="media-cover" /></div><figcaption><span>{phase.label}</span><span aria-hidden="true">↗</span></figcaption></figure>)}</div>
+                    <div className="gallery-heading"><p className="section-kicker section-kicker--dark">Registro del proyecto</p><span>{activeProject.gallery.length} vistas disponibles</span></div>
+                    <div className="project-gallery" aria-label={`Registro visual de ${activeProject.title}`}>
+                      {activeProject.gallery.map((media) => (
+                        <figure className={`project-gallery__item project-gallery__item--${media.kind}`} key={media.src}>
+                          <div className="project-gallery__media"><Image src={media.src} alt={media.alt} fill sizes="(max-width: 800px) 100vw, 33vw" className="media-cover" /></div>
+                          <figcaption><span>{media.label}</span><span aria-hidden="true">↗</span></figcaption>
+                        </figure>
+                      ))}
+                    </div>
+                    <a className="button button--dark" href="#contacto" onClick={() => closeProject(false)}>Solicitar un proyecto similar <span aria-hidden="true">↗</span></a>
+                  </div>
+                </motion.section>
+              </motion.div>
+            )}
+          </AnimatePresence>,
+        portalTarget,
       )}
-    </div>
+      </div>
+    </MotionConfig>
   );
 }

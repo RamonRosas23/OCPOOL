@@ -2,6 +2,10 @@ import type { Metadata } from 'next';
 import { Cormorant_Garamond, Manrope } from 'next/font/google';
 import './globals.css';
 
+const siteUrl = 'https://www.ocpool.com';
+const siteTitle = 'OCPOOL | Diseño y construcción de albercas';
+const siteDescription = 'OCPOOL desarrolla soluciones integrales para albercas, jacuzzis y espacios acuáticos: diseño, construcción, equipamiento e iluminación.';
+
 const display = Cormorant_Garamond({
   variable: '--font-display',
   subsets: ['latin'],
@@ -17,14 +21,34 @@ const sans = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: 'OCPOOL | Diseño y construcción de albercas',
-  description: 'OCPOOL desarrolla soluciones integrales para albercas, jacuzzis y espacios acuáticos: diseño, construcción, equipamiento e iluminación.',
+  metadataBase: new URL(siteUrl),
+  title: siteTitle,
+  description: siteDescription,
+  alternates: { canonical: '/' },
+  openGraph: {
+    type: 'website',
+    locale: 'es_MX',
+    url: siteUrl,
+    siteName: 'OCPOOL',
+    title: siteTitle,
+    description: siteDescription,
+    images: [{ url: '/proyectos/cdp/hero.jpg', width: 2560, height: 1440, alt: 'Alberca terminada del Club de Playa CDP frente al mar' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: siteTitle,
+    description: siteDescription,
+    images: ['/proyectos/cdp/hero.jpg'],
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es" suppressHydrationWarning>
-      <body className={`${display.variable} ${sans.variable}`}>{children}</body>
+      <body className={`${display.variable} ${sans.variable}`}>
+        <a className="skip-link" href="#contenido">Saltar al contenido</a>
+        {children}
+      </body>
     </html>
   );
 }

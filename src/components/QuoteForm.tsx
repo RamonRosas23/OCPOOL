@@ -53,7 +53,7 @@ export default function QuoteForm() {
       const response = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, acceptTerms }),
       });
       const data = await response.json() as { success?: boolean; mailtoUrl?: string; error?: string };
 
@@ -119,7 +119,7 @@ export default function QuoteForm() {
           </div>
 
           <label className="consent-row">
-            <input type="checkbox" checked={acceptTerms} onChange={(event) => setAcceptTerms(event.target.checked)} />
+            <input id="acceptTerms" name="acceptTerms" type="checkbox" checked={acceptTerms} onChange={(event) => setAcceptTerms(event.target.checked)} />
             <span>Autorizo a OCPOOL a usar estos datos para contactarme sobre esta solicitud.</span>
           </label>
 

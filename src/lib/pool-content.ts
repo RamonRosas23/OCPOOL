@@ -75,9 +75,9 @@ const cdpGallery: ProjectMedia[] = [
   { src: '/proyectos/cdp/gallery/obra-13.png', alt: 'Excavación de la alberca del Club de Playa CDP', label: 'Excavación', kind: 'obra' },
   { src: '/proyectos/cdp/gallery/obra-18.jpg', alt: 'Armado estructural de la alberca del Club de Playa CDP', label: 'Estructura', kind: 'obra' },
   { src: '/proyectos/cdp/gallery/obra-20.jpeg', alt: 'Instalación del acabado interior de la alberca del Club de Playa CDP', label: 'Acabado en obra', kind: 'obra' },
-  { src: '/proyectos/cdp/gallery/final-01.jpeg', alt: 'Detalle terminado de la alberca del Club de Playa CDP', label: 'Entrega 01', kind: 'final' },
-  { src: '/proyectos/cdp/gallery/final-02.jpeg', alt: 'Vista terminada del Club de Playa CDP', label: 'Entrega 02', kind: 'final' },
-  { src: '/proyectos/cdp/gallery/final-03.jpeg', alt: 'Alberca terminada del Club de Playa CDP', label: 'Entrega 03', kind: 'final' },
+  { src: '/proyectos/cdp/gallery/final-01.png', alt: 'Detalle terminado de la alberca del Club de Playa CDP', label: 'Entrega 01', kind: 'final' },
+  { src: '/proyectos/cdp/gallery/final-02.png', alt: 'Vista terminada del Club de Playa CDP', label: 'Entrega 02', kind: 'final' },
+  { src: '/proyectos/cdp/gallery/final-03.png', alt: 'Alberca terminada del Club de Playa CDP', label: 'Entrega 03', kind: 'final' },
   { src: '/proyectos/cdp/gallery/final-04.jpeg', alt: 'Alberca del Club de Playa CDP frente al océano', label: 'Entrega 04', kind: 'final' },
   { src: '/proyectos/cdp/gallery/final-05.jpeg', alt: 'Terraza y alberca terminadas del Club de Playa CDP', label: 'Entrega 05', kind: 'final' },
   { src: '/proyectos/cdp/gallery/final-06.jpeg', alt: 'Espacio exterior terminado del Club de Playa CDP', label: 'Entrega 06', kind: 'final' },
@@ -101,7 +101,7 @@ export const projects: Project[] = [
   {
     id: 'cdp', title: 'Club de Playa CDP', location: 'Islas Marías, Nayarit', year: '2024', status: 'Entregado', category: 'Hospitalidad',
     summary: 'Club de playa con alberca, terrazas e iluminación integradas al frente marítimo.',
-    image: '/proyectos/cdp/hero.jpg', imageAlt: 'Piscina terminada del Club de Playa CDP frente al mar',
+    image: '/proyectos/cdp/gallery/final-14.jpeg', imageAlt: 'Piscina terminada del Club de Playa CDP frente al mar',
     phases: [
       { label: 'Propuesta', image: '/proyectos/cdp/gallery/render-01.jpg', alt: 'Render arquitectónico del Club de Playa CDP' },
       { label: 'Obra', image: '/proyectos/cdp/gallery/obra-13.png', alt: 'Proceso de construcción de la piscina del Club de Playa CDP' },
@@ -112,10 +112,10 @@ export const projects: Project[] = [
   {
     id: 'closter', title: 'Alberca Closter', location: 'Puerto Balleto, Islas Marías', year: '2024', status: 'Entregado', category: 'Hospitalidad',
     summary: 'Alberca, sala hundida, fogatero y palapas organizan las áreas de convivencia.',
-    image: '/proyectos/closter/hero.jpg', imageAlt: 'Alberca terminada del proyecto Closter con palapas y paisaje tropical',
+    image: '/proyectos/closter/gallery/final-06.jpeg', imageAlt: 'Alberca terminada del proyecto Closter con palapas y paisaje tropical',
     phases: [
       { label: 'Propuesta', image: '/proyectos/closter/gallery/render-01.jpeg', alt: 'Render de la alberca Closter' },
-      { label: 'Entrega final', image: '/proyectos/closter/gallery/final-03.jpeg', alt: 'Entrega final de la alberca Closter' },
+      { label: 'Entrega final', image: '/proyectos/closter/gallery/final-06.jpeg', alt: 'Entrega final de la alberca Closter' },
     ],
     gallery: closterGallery, capabilities: ['Diseño de espacio exterior', 'Acabados para áreas húmedas', 'Paisajismo'],
   },
@@ -188,8 +188,8 @@ export const services: Service[] = [
   { eyebrow: '01 / Proyectar', title: 'Diseño y construcción', description: 'Definimos ubicación, geometría, materiales y ejecución de la alberca de acuerdo con la arquitectura y el uso previsto.', image: '/proyectos/cdp/gallery/render-01.jpg', imageAlt: 'Render del diseño integral del Club de Playa CDP' },
   { eyebrow: '02 / Rehabilitar', title: 'Rehabilitación y remodelación', description: 'Revisamos el estado de la alberca existente y definimos las intervenciones necesarias en estructura, acabados y equipos.', image: '/proyectos/cdp/gallery/obra-09.png', imageAlt: 'Instalación de acabado en una alberca en proceso' },
   { eyebrow: '03 / Equipar', title: 'Sistemas hidráulicos', description: 'Especificamos circulación, filtración y equipos para una operación estable y un mantenimiento claro.', image: '/proyectos/cdp/gallery/obra-04.jpg', imageAlt: 'Instalaciones hidráulicas en proceso para una alberca' },
-  { eyebrow: '04 / Iluminar', title: 'Iluminación arquitectónica y subacuática', description: 'Definimos puntos y niveles de luz para mejorar seguridad, recorridos y uso nocturno.', image: '/proyectos/asipona/gallery/final-02.png', imageAlt: 'Iluminación subacuática de la piscina ASIPONA' },
-  { eyebrow: '05 / Especificar', title: 'Acabados y materiales', description: 'Seleccionamos superficies y componentes según humedad, tránsito, clima y mantenimiento.', image: '/proyectos/cdp/gallery/final-01.jpeg', imageAlt: 'Detalle de acabado terminado en una alberca' },
+  { eyebrow: '04 / Iluminar', title: 'Iluminación arquitectónica y subacuática', description: 'Definimos puntos y niveles de luz para mejorar seguridad, recorridos y uso nocturno.', image: '/proyectos/asipona/gallery/final-04.png', imageAlt: 'Iluminación subacuática de la piscina ASIPONA' },
+  { eyebrow: '05 / Especificar', title: 'Acabados y materiales', description: 'Seleccionamos superficies y componentes según humedad, tránsito, clima y mantenimiento.', image: '/proyectos/cdp/gallery/final-01.png', imageAlt: 'Detalle de acabado terminado en una alberca' },
 ];
 
 export const processSteps: ProcessStep[] = [
@@ -202,8 +202,8 @@ export const processSteps: ProcessStep[] = [
 export const visualProof: ProofItem[] = [
   { src: '/proyectos/cdp/hero.jpg', alt: 'Alberca terminada frente al mar', label: 'Entrega', caption: 'Espacio terminado y listo para operar.' },
   { src: '/proyectos/cdp/obra.jpg', alt: 'Proceso de construcción de una alberca', label: 'Obra', caption: 'Estructura e instalaciones en proceso.' },
-  { src: '/proyectos/cdp/gallery/final-01.jpeg', alt: 'Detalle de acabado de una alberca terminada', label: 'Acabado', caption: 'Materiales elegidos para humedad y uso.' },
-  { src: '/proyectos/asipona/hero.png', alt: 'Alberca iluminada durante la noche', label: 'Iluminación', caption: 'Iluminación prevista para el uso nocturno.' },
+  { src: '/proyectos/cdp/gallery/final-01.png', alt: 'Detalle de acabado de una alberca terminada', label: 'Acabado', caption: 'Materiales elegidos para humedad y uso.' },
+  { src: '/proyectos/cdp/gallery/final-02.png', alt: 'Alberca iluminada durante la noche', label: 'Iluminación', caption: 'Iluminación prevista para el uso nocturno.' },
 ];
 
 export const constructionStory: ProofItem[] = [

@@ -78,7 +78,7 @@ for (const asset of [
   'public/brand/ocpool-logo.png',
   'public/brand/ocpool-logo-white.png',
   'public/proyectos/cdp/hero.jpg',
-  'public/proyectos/cdp/gallery/final-01.jpeg',
+  'public/proyectos/cdp/gallery/final-01.png',
   'public/proyectos/cdp/gallery/obra-01.jpg',
   'public/proyectos/closter/hero.jpg',
   'public/proyectos/asipona/hero.png',
