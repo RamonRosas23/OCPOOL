@@ -74,7 +74,7 @@ export default function Home() {
       <main id="contenido" tabIndex={-1}>
         <section id="inicio" className="hero">
           <Image
-            src="/proyectos/cdp/gallery/finprueba.png"
+            src="/proyectos/cdp/gallery/final-02.png"
             alt="Piscina terminada del Club de Playa CDP frente al mar"
             fill
             priority
